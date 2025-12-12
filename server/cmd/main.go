@@ -9,9 +9,9 @@ import (
 )
 
 func main() {
-	cfg := config.LoadConfig()
+	config.LoadConfig()
 
-	srv := web.NewServer(cfg)
+	srv := web.NewServer()
 	if err := srv.Run(); err != nil {
 		log.Printf("Server failed to start: %v", err)
 		os.Exit(1)

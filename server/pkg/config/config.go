@@ -9,17 +9,37 @@ import (
 
 type Config struct {
 	PORT string
+
+	DB_HOST     string
+	DB_PORT     string
+	DB_USER     string
+	DB_PASSWORD string
+	DB_NAME     string
+
+	ID_SALT string
+
+	JWT_SECRET string
 }
 
-func LoadConfig() Config {
-	if err := godotenv.Load(); err != nil {
-		log.Printf("Error: %v", err)
-		log.Println("No .env file found, relying on system environment variables")
-	}
-	port := getEnv("PORT", "7000")
+var AppConfig Config
 
-	return Config{
-		PORT: port,
+func LoadConfig() {
+	if err := godotenv.Load(); err != nil {
+		log.Printf("Error loading .env file: %v", err)
+	}
+
+	AppConfig = Config{
+		PORT: getEnv("PORT", "7000"),
+
+		DB_HOST:     getEnv("DB_HOST", "localhost"),
+		DB_PORT:     getEnv("DB_PORT", "5432"),
+		DB_USER:     getEnv("DB_USER", "postgres"),
+		DB_PASSWORD: getEnv("DB_PASSWORD", "password"),
+		DB_NAME:     getEnv("DB_NAME", "bookture"),
+
+		ID_SALT: getEnv("ID_SALT", "bookture-secret-salt-change-me"),
+
+		JWT_SECRET: getEnv("JWT_SECRET", "your_secret_key"),
 	}
 }
 

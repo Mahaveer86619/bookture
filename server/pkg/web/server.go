@@ -11,32 +11,49 @@ import (
 	"time"
 
 	"github.com/Mahaveer86619/bookture/server/pkg/config"
+	"github.com/Mahaveer86619/bookture/server/pkg/db"
 	"github.com/Mahaveer86619/bookture/server/pkg/handlers"
+	"github.com/Mahaveer86619/bookture/server/pkg/middleware"
 	"github.com/Mahaveer86619/bookture/server/pkg/services"
 )
 
 type Server struct {
-	cfg           config.Config
-	router        *http.ServeMux
-	healthHandler *handlers.HealthHandler
+	cfg    config.Config
+	router *http.ServeMux
 }
 
-func NewServer(cfg config.Config) *Server {
-	healthService := services.NewHealthService()
-	healthHandler := handlers.NewHealthHandler(healthService)
-
+func NewServer() *Server {
 	return &Server{
-		cfg:           cfg,
-		healthHandler: healthHandler,
-		router:        http.NewServeMux(),
+		cfg:    config.AppConfig,
+		router: http.NewServeMux(),
 	}
 }
 
+func (s *Server) initSystem() {
+	db.InitBookture()
+}
+
 func (s *Server) setupRoutes() {
-	s.router.HandleFunc("/health", s.healthHandler.CheckHealth)
+	healthService := services.NewHealthService()
+	healthHandler := handlers.NewHealthHandler(healthService)
+
+	userService := services.NewUserService()
+	userHandler := handlers.NewUserHandler(userService)
+
+	s.router.HandleFunc("GET /health", healthHandler.CheckHealth)
+
+	s.router.HandleFunc("POST /register", userHandler.Register)
+	s.router.HandleFunc("POST /login", userHandler.Login)
+	s.router.HandleFunc("POST /refresh", userHandler.RefreshToken)
+
+	s.router.HandleFunc("GET /me", middleware.Middleware(userHandler.Me))
+	s.router.HandleFunc("PUT /user", middleware.Middleware(userHandler.UpdateUser))
+	s.router.HandleFunc("DELETE /user", middleware.Middleware(userHandler.DeleteHandler))
+
 }
 
 func (s *Server) Run() error {
+	s.initSystem()
 	s.setupRoutes()
 
 	srv := &http.Server{
@@ -50,7 +67,7 @@ func (s *Server) Run() error {
 	serverErrors := make(chan error, 1)
 
 	go func() {
-		log.Printf("Server starting on port %s", s.cfg.PORT)
+		fmt.Println(GetStartMessage(s.cfg.PORT))
 		serverErrors <- srv.ListenAndServe()
 	}()
 
@@ -78,10 +95,10 @@ func (s *Server) Run() error {
 func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		log.Printf("Started %s %s", r.Method, r.URL.Path)
+		log.Printf("Request -> %s %s", r.Method, r.URL.Path)
 
 		next.ServeHTTP(w, r)
 
-		log.Printf("Completed %s %s in %v", r.Method, r.URL.Path, time.Since(start))
+		log.Printf("Response -> %s %s in %v", r.Method, r.URL.Path, time.Since(start))
 	})
 }
