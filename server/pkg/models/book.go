@@ -29,10 +29,12 @@ type Volume struct {
 	Description string
 
 	Status   string // pending / uploaded / processing / completed / error
+	Progress int
 	FilePath string // Path to the file in storage (local/s3)
 	Uploaded bool   // true if file is physically present
 	ParsedAt *time.Time
 
+	Book     Book
 	Chapters []Chapter `gorm:"constraint:OnDelete:CASCADE;"`
 }
 

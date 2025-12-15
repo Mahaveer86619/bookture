@@ -24,6 +24,10 @@ type Config struct {
 
 	STORAGE_DRIVER string
 	STORAGE_PATH   string
+
+	LLM_PROVIDER string
+	LLM_KEY      string
+	LLM_MODEL    string
 }
 
 var AppConfig Config
@@ -50,6 +54,10 @@ func LoadConfig() {
 
 		STORAGE_DRIVER: getEnv("STORAGE_DRIVER", "local"),
 		STORAGE_PATH:   getEnv("STORAGE_PATH", "./uploads"),
+
+		LLM_PROVIDER: getEnv("LLM_PROVIDER", "gemini-api"),
+		LLM_KEY:      getEnv("LLM_KEY", ""),
+		LLM_MODEL:    getEnv("LLM_MODEL", "gemini-1.5-flash"),
 	}
 }
 

@@ -54,9 +54,6 @@ func (r CreateBookRequest) Valid() error {
 	if r.LibraryID == "" {
 		return errors.New("library_id is required")
 	}
-	if r.Title == "" {
-		return errors.New("title cannot be empty")
-	}
 	return nil
 }
 
@@ -71,9 +68,6 @@ type UpdateBookRequest struct {
 func (r UpdateBookRequest) Valid() error {
 	if r.ID == "" {
 		return errors.New("id is required")
-	}
-	if r.Title == "" {
-		return errors.New("title cannot be empty")
 	}
 	return nil
 }

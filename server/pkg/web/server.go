@@ -15,6 +15,7 @@ import (
 	"github.com/Mahaveer86619/bookture/server/pkg/handlers"
 	"github.com/Mahaveer86619/bookture/server/pkg/middleware"
 	"github.com/Mahaveer86619/bookture/server/pkg/services"
+	"github.com/Mahaveer86619/bookture/server/pkg/services/llm"
 	"github.com/Mahaveer86619/bookture/server/pkg/services/storage"
 )
 
@@ -40,14 +41,28 @@ func (s *Server) setupRoutes() {
 		log.Fatalf("Fatal: Failed to initialize storage: %v", err)
 	}
 
-	healthService := services.NewHealthService(storageService)
-	healthHandler := handlers.NewHealthHandler(healthService)
+	llmService := llm.NewLLMService()
+	if err := llmService.Init(); err != nil {
+		log.Printf("Warning: LLM Service failed to init: %v", err)
+	}
 
-	userService := services.NewUserService()
-	userHandler := handlers.NewUserHandler(userService)
+	processingService := services.NewProcessingService(3, 100)
+	parserService := services.NewParserService(llmService)
 
+	// 3. Domain Services
 	libraryService := services.NewLibraryService()
+	
+	// Inject dependencies into BookService
+	bookService := services.NewBookService(storageService, libraryService, processingService, parserService)
+
+	healthService := services.NewHealthService(storageService)
+	userService := services.NewUserService()
+
+	// 4. Handlers
+	healthHandler := handlers.NewHealthHandler(healthService)
+	userHandler := handlers.NewUserHandler(userService)
 	libraryHandler := handlers.NewLibraryHander(libraryService)
+	bookHandler := handlers.NewBookHandler(bookService)
 
 	// Health
 	s.router.HandleFunc("GET /health", healthHandler.CheckHealth)
@@ -71,6 +86,8 @@ func (s *Server) setupRoutes() {
 	s.router.HandleFunc("DELETE /library", middleware.Middleware(libraryHandler.DeleteLibrary))
 
 	// Book upload
+	s.router.HandleFunc("POST /book", middleware.Middleware(bookHandler.CreateDraft))
+	s.router.HandleFunc("POST /volume/upload", middleware.Middleware(bookHandler.UploadVolume))
 }
 
 func (s *Server) Run() error {
