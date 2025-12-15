@@ -15,6 +15,7 @@ import (
 	"github.com/Mahaveer86619/bookture/server/pkg/handlers"
 	"github.com/Mahaveer86619/bookture/server/pkg/middleware"
 	"github.com/Mahaveer86619/bookture/server/pkg/services"
+	"github.com/Mahaveer86619/bookture/server/pkg/services/storage"
 )
 
 type Server struct {
@@ -34,7 +35,12 @@ func (s *Server) initSystem() {
 }
 
 func (s *Server) setupRoutes() {
-	healthService := services.NewHealthService()
+	storageService := storage.NewStorageService()
+	if err := storageService.Init(); err != nil {
+		log.Fatalf("Fatal: Failed to initialize storage: %v", err)
+	}
+
+	healthService := services.NewHealthService(storageService)
 	healthHandler := handlers.NewHealthHandler(healthService)
 
 	userService := services.NewUserService()
@@ -63,6 +69,8 @@ func (s *Server) setupRoutes() {
 	s.router.HandleFunc("GET /library/get", middleware.Middleware(libraryHandler.GetLibrary))
 	s.router.HandleFunc("PUT /library", middleware.Middleware(libraryHandler.UpdateLibrary))
 	s.router.HandleFunc("DELETE /library", middleware.Middleware(libraryHandler.DeleteLibrary))
+
+	// Book upload
 }
 
 func (s *Server) Run() error {

@@ -36,7 +36,7 @@ func InitBookture(isLocal ...bool) {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	log.Println("Database connection established successfully")
+	fmt.Println("Database connection established successfully")
 }
 
 func GetBooktureDB() *BooktureDB {

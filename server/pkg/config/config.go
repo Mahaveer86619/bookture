@@ -10,6 +10,8 @@ import (
 type Config struct {
 	PORT string
 
+	PROFILE string
+
 	DB_HOST     string
 	DB_PORT     string
 	DB_USER     string
@@ -19,17 +21,22 @@ type Config struct {
 	ID_SALT string
 
 	JWT_SECRET string
+
+	STORAGE_DRIVER string
+	STORAGE_PATH   string
 }
 
 var AppConfig Config
 
 func LoadConfig() {
-	if err := godotenv.Load(); err != nil {
+	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
 		log.Printf("Error loading .env file: %v", err)
 	}
 
 	AppConfig = Config{
 		PORT: getEnv("PORT", "7000"),
+
+		PROFILE: getEnv("PROFILE", "dev"),
 
 		DB_HOST:     getEnv("DB_HOST", "localhost"),
 		DB_PORT:     getEnv("DB_PORT", "5432"),
@@ -40,6 +47,9 @@ func LoadConfig() {
 		ID_SALT: getEnv("ID_SALT", "bookture-secret-salt-change-me"),
 
 		JWT_SECRET: getEnv("JWT_SECRET", "your_secret_key"),
+
+		STORAGE_DRIVER: getEnv("STORAGE_DRIVER", "local"),
+		STORAGE_PATH:   getEnv("STORAGE_PATH", "./uploads"),
 	}
 }
 

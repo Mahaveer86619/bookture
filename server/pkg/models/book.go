@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"gorm.io/gorm"
 )
 
@@ -23,8 +25,13 @@ type Volume struct {
 
 	BookID      uint `gorm:"index"`
 	Title       string
-	VolumeNo    int
+	Index       int
 	Description string
+
+	Status   string // pending / uploaded / processing / completed / error
+	FilePath string // Path to the file in storage (local/s3)
+	Uploaded bool   // true if file is physically present
+	ParsedAt *time.Time
 
 	Chapters []Chapter `gorm:"constraint:OnDelete:CASCADE;"`
 }

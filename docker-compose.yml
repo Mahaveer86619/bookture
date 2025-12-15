@@ -12,6 +12,8 @@ services:
         condition: service_healthy
     networks:
       - bookture-network
+    volumes:
+      - ./server/uploads:/app/uploads
 
   db:
     image: postgres:latest

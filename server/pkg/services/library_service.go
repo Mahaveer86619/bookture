@@ -75,7 +75,7 @@ func (s *LibraryService) UpdateLibrary(id uint, userID uint, name string) (*view
 }
 
 func (s *LibraryService) DeleteLibrary(id uint, userID uint) error {
-	res := s.db.Where("id = ? AND user_id = ?", id, userID).Delete(&models.Library{})
+	res := s.db.Where("id = ? AND user_id = ?", id, userID).Delete(&models.Library{}).Unscoped()
 	if res.Error != nil {
 		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
 			return errz.New(errz.NotFound, "Library not found or access denied", res.Error)
