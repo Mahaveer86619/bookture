@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"strings"
 	"time"
@@ -65,11 +64,11 @@ func ValidateRefreshToken(tokenString string) (uint, error) {
 	})
 
 	if err != nil || !token.Valid {
-		return 0, errors.New("invalid refresh token")
+		return 0, errz.New(errz.Unauthorized, "Invalid refresh token", err)
 	}
 
 	if claims.TokenType != "refresh" {
-		return 0, errors.New("invalid token type")
+		return 0, errz.New(errz.Unauthorized, "Invalid token type", nil)
 	}
 
 	return claims.UserID, nil
@@ -79,7 +78,7 @@ func Middleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
-			errz.HandleErrors(w, http.StatusUnauthorized, errors.New("authorization header required"))
+			errz.HandleErrors(w, errz.New(errz.Unauthorized, "Authorization header required", nil))
 			return
 		}
 
@@ -91,12 +90,12 @@ func Middleware(next http.HandlerFunc) http.HandlerFunc {
 		})
 
 		if err != nil || !token.Valid {
-			errz.HandleErrors(w, http.StatusUnauthorized, errors.New("invalid token"))
+			errz.HandleErrors(w, errz.New(errz.Unauthorized, "Invalid or expired token", err))
 			return
 		}
 
 		if claims.TokenType != "access" {
-			errz.HandleErrors(w, http.StatusUnauthorized, errors.New("invalid token type for authentication"))
+			errz.HandleErrors(w, errz.New(errz.Unauthorized, "Invalid token type for authentication", nil))
 			return
 		}
 

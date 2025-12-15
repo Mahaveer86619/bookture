@@ -22,17 +22,18 @@ func NewUserHandler(svc *services.UserService) *UserHandler {
 func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req views.RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		errz.HandleErrors(w, http.StatusBadRequest, err)
+		errz.HandleErrors(w, err)
 		return
 	}
 
 	if err := req.Valid(); err != nil {
-		errz.HandleErrors(w, http.StatusBadRequest, err)
+		errz.HandleErrors(w, err)
+		return
 	}
 
 	resp, err := h.svc.Register(req.Email, req.Password, req.DisplayName)
 	if err != nil {
-		errz.HandleErrors(w, http.StatusBadRequest, err)
+		errz.HandleErrors(w, err)
 		return
 	}
 
@@ -43,17 +44,18 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req views.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		errz.HandleErrors(w, http.StatusBadRequest, err)
+		errz.HandleErrors(w, err)
 		return
 	}
 
 	if err := req.Valid(); err != nil {
-		errz.HandleErrors(w, http.StatusBadRequest, err)
+		errz.HandleErrors(w, err)
+		return
 	}
 
 	resp, err := h.svc.Login(req.Email, req.Password)
 	if err != nil {
-		errz.HandleErrors(w, http.StatusUnauthorized, err)
+		errz.HandleErrors(w, err)
 		return
 	}
 
@@ -64,18 +66,18 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	var req views.RefreshRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		errz.HandleErrors(w, http.StatusBadRequest, err)
+		errz.HandleErrors(w, err)
 		return
 	}
 
 	if err := req.Valid(); err != nil {
-		errz.HandleErrors(w, http.StatusBadRequest, err)
+		errz.HandleErrors(w, err)
 		return
 	}
 
 	resp, err := h.svc.Refresh(req.RefreshToken)
 	if err != nil {
-		errz.HandleErrors(w, http.StatusUnauthorized, err)
+		errz.HandleErrors(w, err)
 		return
 	}
 
@@ -87,7 +89,7 @@ func (h *UserHandler) Me(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r)
 	user, err := h.svc.GetUser(userID)
 	if err != nil {
-		errz.HandleErrors(w, http.StatusNotFound, err)
+		errz.HandleErrors(w, err)
 		return
 	}
 	success := views.Success{StatusCode: http.StatusOK, Data: user, Message: "User profile fetched"}
@@ -99,24 +101,24 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	var req views.UpdateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		errz.HandleErrors(w, http.StatusBadRequest, err)
+		errz.HandleErrors(w, err)
 		return
 	}
 
 	reqId, err := utils.UnmaskID(req.ID)
 	if err != nil {
-		errz.HandleErrors(w, http.StatusBadRequest, err)
+		errz.HandleErrors(w, err)
 		return
 	}
 
 	if ctxUserID != reqId {
-		errz.HandleErrors(w, http.StatusForbidden, err)
+		errz.HandleErrors(w, err)
 		return
 	}
 
 	resp, err := h.svc.UpdateUser(reqId, req.DisplayName)
 	if err != nil {
-		errz.HandleErrors(w, http.StatusInternalServerError, err)
+		errz.HandleErrors(w, err)
 		return
 	}
 
@@ -131,18 +133,18 @@ func (h *UserHandler) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	reqId, err := utils.UnmaskID(queryID)
 	if err != nil {
-		errz.HandleErrors(w, http.StatusBadRequest, err)
+		errz.HandleErrors(w, err)
 		return
 	}
 
 	if ctxUserID != reqId {
-		errz.HandleErrors(w, http.StatusForbidden, err)
+		errz.HandleErrors(w, err)
 		return
 	}
 
 	err = h.svc.DeleteUser(ctxUserID)
 	if err != nil {
-		errz.HandleErrors(w, http.StatusInternalServerError, err)
+		errz.HandleErrors(w, err)
 		return
 	}
 

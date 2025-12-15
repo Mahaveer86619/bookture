@@ -22,7 +22,7 @@ func NewHealthHandler(healthService *services.HealthService) *HealthHandler {
 func (hh *HealthHandler) CheckHealth(w http.ResponseWriter, r *http.Request) {
 	healthView, err := hh.healthService.CheckHealth()
 	if err != nil {
-		errz.HandleErrors(w, http.StatusInternalServerError, errors.New("service is unavailable"))
+		errz.HandleErrors(w, errors.New("service is unavailable"))
 		return
 	}
 
@@ -32,7 +32,7 @@ func (hh *HealthHandler) CheckHealth(w http.ResponseWriter, r *http.Request) {
 	successResp.SetData(healthView)
 
 	if err := successResp.JSON(w); err != nil {
-		errz.HandleErrors(w, http.StatusInternalServerError, err)
+		errz.HandleErrors(w, err)
 		return
 	}
 }

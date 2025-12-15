@@ -40,16 +40,29 @@ func (s *Server) setupRoutes() {
 	userService := services.NewUserService()
 	userHandler := handlers.NewUserHandler(userService)
 
+	libraryService := services.NewLibraryService()
+	libraryHandler := handlers.NewLibraryHander(libraryService)
+
+	// Health
 	s.router.HandleFunc("GET /health", healthHandler.CheckHealth)
 
+	// Auth
 	s.router.HandleFunc("POST /register", userHandler.Register)
 	s.router.HandleFunc("POST /login", userHandler.Login)
 	s.router.HandleFunc("POST /refresh", userHandler.RefreshToken)
 
+	// Protected routes
+	// User auth
 	s.router.HandleFunc("GET /me", middleware.Middleware(userHandler.Me))
 	s.router.HandleFunc("PUT /user", middleware.Middleware(userHandler.UpdateUser))
 	s.router.HandleFunc("DELETE /user", middleware.Middleware(userHandler.DeleteHandler))
 
+	// Library crud
+	s.router.HandleFunc("POST /library", middleware.Middleware(libraryHandler.CreateNewLibrary))
+	s.router.HandleFunc("GET /library", middleware.Middleware(libraryHandler.GetLibraries))
+	s.router.HandleFunc("GET /library/get", middleware.Middleware(libraryHandler.GetLibrary))
+	s.router.HandleFunc("PUT /library", middleware.Middleware(libraryHandler.UpdateLibrary))
+	s.router.HandleFunc("DELETE /library", middleware.Middleware(libraryHandler.DeleteLibrary))
 }
 
 func (s *Server) Run() error {

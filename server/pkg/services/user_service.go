@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/Mahaveer86619/bookture/server/pkg/db"
+	"github.com/Mahaveer86619/bookture/server/pkg/errz"
 	"github.com/Mahaveer86619/bookture/server/pkg/middleware"
 	"github.com/Mahaveer86619/bookture/server/pkg/models"
 	"github.com/Mahaveer86619/bookture/server/pkg/views"
@@ -22,13 +23,11 @@ func NewUserService() *UserService {
 }
 
 func (s *UserService) Register(email, password, displayName string) (*views.AuthResponse, error) {
-	// 1. Hash Password
 	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
 	}
 
-	// 2. Create User
 	user := models.User{
 		Email:        email,
 		PasswordHash: string(hashed),
@@ -36,10 +35,9 @@ func (s *UserService) Register(email, password, displayName string) (*views.Auth
 	}
 
 	if err := s.db.Create(&user).Error; err != nil {
-		return nil, err
+		return nil, errz.New(errz.Conflict, "Email already registered", err)
 	}
 
-	// 3. Generate Token
 	accessToken, refreshToken, err := middleware.GenerateTokens(user.ID)
 	if err != nil {
 		return nil, err
@@ -55,16 +53,16 @@ func (s *UserService) Register(email, password, displayName string) (*views.Auth
 func (s *UserService) Login(email, password string) (*views.AuthResponse, error) {
 	var user models.User
 	if err := s.db.Where("email = ?", email).First(&user).Error; err != nil {
-		return nil, errors.New("invalid credentials")
+		return nil, errz.New(errz.Unauthorized, "Invalid credentials", err)
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
-		return nil, errors.New("invalid credentials")
+		return nil, errz.New(errz.Unauthorized, "Invalid credentials", err)
 	}
 
 	accessToken, refreshToken, err := middleware.GenerateTokens(user.ID)
 	if err != nil {
-		return nil, err
+		return nil, errz.New(errz.InternalServerError, "Failed to generate tokens", err)
 	}
 
 	return &views.AuthResponse{
@@ -77,19 +75,17 @@ func (s *UserService) Login(email, password string) (*views.AuthResponse, error)
 func (s *UserService) Refresh(refreshToken string) (*views.AuthResponse, error) {
 	userID, err := middleware.ValidateRefreshToken(refreshToken)
 	if err != nil {
-		return nil, errors.New("invalid or expired refresh token")
+		return nil, errz.New(errz.Unauthorized, "Invalid or expired refresh token", err)
 	}
 
-	// Verify user still exists
 	var user models.User
 	if err := s.db.First(&user, userID).Error; err != nil {
-		return nil, errors.New("user not found")
+		return nil, errz.New(errz.Unauthorized, "User account not found", err)
 	}
 
-	// Rotate tokens: Generate a fresh pair
 	newAccessToken, newRefreshToken, err := middleware.GenerateTokens(user.ID)
 	if err != nil {
-		return nil, err
+		return nil, errz.New(errz.InternalServerError, "Failed to rotate tokens", err)
 	}
 
 	return &views.AuthResponse{
@@ -102,8 +98,12 @@ func (s *UserService) Refresh(refreshToken string) (*views.AuthResponse, error) 
 func (s *UserService) GetUser(id uint) (*views.UserView, error) {
 	var user models.User
 	if err := s.db.First(&user, id).Error; err != nil {
-		return nil, errors.New("user not found")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errz.New(errz.NotFound, "User not found", err)
+		}
+		return nil, errz.New(errz.InternalServerError, "Database error", err)
 	}
+
 	v := views.ToUserView(&user)
 	return &v, nil
 }
@@ -111,12 +111,15 @@ func (s *UserService) GetUser(id uint) (*views.UserView, error) {
 func (s *UserService) UpdateUser(id uint, displayName string) (*views.UserView, error) {
 	var user models.User
 	if err := s.db.First(&user, id).Error; err != nil {
-		return nil, errors.New("user not found")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errz.New(errz.NotFound, "User not found", err)
+		}
+		return nil, errz.New(errz.InternalServerError, "Database error", err)
 	}
 
 	user.DisplayName = displayName
 	if err := s.db.Save(&user).Error; err != nil {
-		return nil, err
+		return nil, errz.New(errz.InternalServerError, "Failed to update user", err)
 	}
 	v := views.ToUserView(&user)
 	return &v, nil
@@ -125,11 +128,14 @@ func (s *UserService) UpdateUser(id uint, displayName string) (*views.UserView, 
 func (s *UserService) DeleteUser(id uint) error {
 	var user models.User
 	if err := s.db.First(&user, id).Error; err != nil {
-		return errors.New("user not found")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errz.New(errz.NotFound, "User not found", err)
+		}
+		return errz.New(errz.InternalServerError, "Database error", err)
 	}
 
 	if err := s.db.Unscoped().Delete(&user).Error; err != nil {
-		return err
+		return errz.New(errz.InternalServerError, "Failed to delete user", err)
 	}
 
 	return nil
