@@ -23,8 +23,13 @@ type AIGenerationJob struct {
 	TargetType string // scene / summary / tts
 	TargetID   uint   `gorm:"index"`
 	JobType    string // image / text / tts
+
 	PromptText string `gorm:"type:text"`
 	Status     string // pending / generating / completed / failed
-	ErrorMsg   string `gorm:"type:text"`
-	OutputURL  string
+
+	RetryCount int `gorm:"default:0"`
+	MaxRetries int `gorm:"default:3"`
+
+	ErrorMsg  string `gorm:"type:text"`
+	OutputURL string
 }

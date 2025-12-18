@@ -31,7 +31,7 @@ func (s *GeminiService) Init() error {
 
 	s.client = client
 	s.model = config.AppConfig.LLM_MODEL
-	log.Printf("LLM Service initialized (Provider: Gemini, Model: %s)", s.model)
+	fmt.Printf("LLM Service initialized (Provider: Gemini, Model: %s)", s.model)
 	return nil
 }
 

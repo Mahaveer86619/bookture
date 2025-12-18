@@ -15,7 +15,9 @@ import (
 	"github.com/Mahaveer86619/bookture/server/pkg/handlers"
 	"github.com/Mahaveer86619/bookture/server/pkg/middleware"
 	"github.com/Mahaveer86619/bookture/server/pkg/services"
+	"github.com/Mahaveer86619/bookture/server/pkg/services/gen_image"
 	"github.com/Mahaveer86619/bookture/server/pkg/services/llm"
+	"github.com/Mahaveer86619/bookture/server/pkg/services/parser"
 	"github.com/Mahaveer86619/bookture/server/pkg/services/storage"
 )
 
@@ -46,12 +48,17 @@ func (s *Server) setupRoutes() {
 		log.Printf("Warning: LLM Service failed to init: %v", err)
 	}
 
+	imageService := gen_image.NewImageService()
+	if err := imageService.Init(); err != nil {
+		log.Printf("Warning: Image Service failed to init: %v", err)
+	}
+
 	processingService := services.NewProcessingService(3, 100)
-	parserService := services.NewParserService(llmService)
+	parserService := parser.NewParserService(llmService, imageService)
 
 	// 3. Domain Services
 	libraryService := services.NewLibraryService()
-	
+
 	// Inject dependencies into BookService
 	bookService := services.NewBookService(storageService, libraryService, processingService, parserService)
 
@@ -88,6 +95,8 @@ func (s *Server) setupRoutes() {
 	// Book upload
 	s.router.HandleFunc("POST /book", middleware.Middleware(bookHandler.CreateDraft))
 	s.router.HandleFunc("POST /volume/upload", middleware.Middleware(bookHandler.UploadVolume))
+	s.router.HandleFunc("GET /volume/details", middleware.Middleware(bookHandler.GetVolumeDetails))
+	s.router.HandleFunc("GET /task/progress", middleware.Middleware(bookHandler.GetTaskProgress))
 }
 
 func (s *Server) Run() error {

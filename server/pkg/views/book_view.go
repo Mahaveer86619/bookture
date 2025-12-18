@@ -79,6 +79,7 @@ type VolumeView struct {
 	Title     string     `json:"title"`
 	Index     int        `json:"index"` // Volume number (1, 2, 3...)
 	Status    string     `json:"status"`
+	TaskID    string     `json:"task_id,omitempty"`
 	FilePath  *string    `json:"file_path,omitempty"`
 	Uploaded  bool       `json:"uploaded"`
 	ParsedAt  *time.Time `json:"parsed_at,omitempty"`
@@ -147,4 +148,33 @@ func (r UpdateVolumeRequest) Valid() error {
 		return errors.New("title cannot be empty")
 	}
 	return nil
+}
+
+type VolumeDetailView struct {
+	ID           uint          `json:"id"`
+	Title        string        `json:"title"`
+	Author       string        `json:"author"` // From Book
+	CoverImage   string        `json:"cover_image"`
+	Status       string        `json:"status"`
+	Progress     int           `json:"progress"`
+	ChapterCount int           `json:"chapter_count"`
+	WordCount    int           `json:"word_count"`
+	Chapters     []ChapterView `json:"chapters"`
+}
+
+type ChapterView struct {
+	ID        uint          `json:"id"`
+	ChapterNo int           `json:"chapter_no"`
+	Title     string        `json:"title"`
+	WordCount int           `json:"word_count"`
+	Sections  []SectionView `json:"sections"`
+}
+
+type SectionView struct {
+	ID          uint   `json:"id"`
+	SectionNo   int    `json:"section_no"`
+	Content     string `json:"content"` // The parsed text
+	WordCount   int    `json:"word_count"`
+	HasDialogue bool   `json:"has_dialogue"`
+	HasAction   bool   `json:"has_action"`
 }

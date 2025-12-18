@@ -95,3 +95,59 @@ func (h *BookHandler) UploadVolume(w http.ResponseWriter, r *http.Request) {
 	success := views.Success{StatusCode: http.StatusCreated, Data: resp, Message: "Volume uploaded successfully"}
 	_ = success.JSON(w)
 }
+
+func (h *BookHandler) GetTaskProgress(w http.ResponseWriter, r *http.Request) {
+	taskID := r.URL.Query().Get("task_id")
+	if taskID == "" {
+		errz.HandleErrors(w, errz.New(errz.BadRequest, "task_id is required", nil))
+		return
+	}
+
+	progress, err := h.svc.GetTaskProgress(taskID)
+	if err != nil {
+		errz.HandleErrors(w, err)
+		return
+	}
+
+	status := "processing"
+	if progress >= 100 {
+		status = "completed"
+	} else if progress < 0 {
+		status = "error"
+	}
+
+	response := map[string]interface{}{
+		"task_id":  taskID,
+		"progress": progress,
+		"status":   status,
+	}
+
+	success := views.Success{StatusCode: http.StatusOK, Data: response, Message: "Progress retrieved successfully"}
+	_ = success.JSON(w)
+}
+
+func (h *BookHandler) GetVolumeDetails(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r)
+
+	// Get volume_id from query params
+	idStr := r.URL.Query().Get("volume_id")
+	if idStr == "" {
+		errz.HandleErrors(w, errz.New(errz.BadRequest, "volume_id is required", nil))
+		return
+	}
+
+	volID, err := utils.UnmaskID(idStr)
+	if err != nil {
+		errz.HandleErrors(w, errz.New(errz.BadRequest, "Invalid volume ID", err))
+		return
+	}
+
+	resp, err := h.svc.GetVolumeDetails(userID, uint(volID))
+	if err != nil {
+		errz.HandleErrors(w, err)
+		return
+	}
+
+	success := views.Success{StatusCode: http.StatusOK, Data: resp, Message: "Volume details fetched"}
+	_ = success.JSON(w)
+}
