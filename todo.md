@@ -18,10 +18,10 @@
 - [x] **Delete**: Remove a library (and handle cascading logic).
 
 ## 4. Book Management
-- [ ] **Add Book**: Schema validation and database insertion for book metadata.
-- [ ] **Read**: Get single book details and paginated list of books.
-- [ ] **Update**: Edit book metadata (authors, genres, year).
-- [ ] **Delete**: Remove book reference.
+- [x] **Add Book**: Schema validation and database insertion for book metadata.
+- [x] **Read**: Get single book details and paginated list of books.
+- [x] **Update**: Edit book metadata (authors, genres, year).
+- [x] **Delete**: Remove book reference.
 
 ## 5. Volume Management (File Handling)
 - [ ] **Volume CRUD**:
@@ -37,3 +37,10 @@
 ## 6. Backlog / Upcoming
 - [ ] Integration Testing
 - [ ] API Documentation (Swagger/OpenAPI)
+
+
+# TODO
+- book parsing does not work, for plays like Romeo and Juliet some parsing is being done, but for normal books it is not
+- local storage is bugged, even for different libraries and books, the book index is increasing but inside the volume index is bugged.
+- llm service is hitting rate limits, too often.
+- image service is never been tested. 

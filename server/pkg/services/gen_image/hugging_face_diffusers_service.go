@@ -27,6 +27,8 @@ func (s *HuggingFaceDiffusersService) Init() error {
 	if s.apiKey == "" {
 		return fmt.Errorf("HuggingFace API key is missing")
 	}
+
+	fmt.Printf("Gen Image Service initialized (Provider: Hugging Face Diffusers, Model: %s)\n", config.AppConfig.IMAGE_MODEL)
 	return nil
 }
 

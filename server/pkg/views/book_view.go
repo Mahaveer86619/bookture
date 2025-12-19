@@ -171,10 +171,22 @@ type ChapterView struct {
 }
 
 type SectionView struct {
-	ID          uint   `json:"id"`
-	SectionNo   int    `json:"section_no"`
-	Content     string `json:"content"` // The parsed text
-	WordCount   int    `json:"word_count"`
-	HasDialogue bool   `json:"has_dialogue"`
-	HasAction   bool   `json:"has_action"`
+	ID          uint        `json:"id"`
+	SectionNo   int         `json:"section_no"`
+	Content     string      `json:"content"`
+	WordCount   int         `json:"word_count"`
+	HasDialogue bool        `json:"has_dialogue"`
+	HasAction   bool        `json:"has_action"`
+	Scenes      []SceneView `json:"scenes,omitempty"`
+}
+
+type SceneView struct {
+	ID              uint    `json:"id"`
+	Summary         string  `json:"summary"`
+	ImageURL        string  `json:"image_url,omitempty"`
+	ImagePrompt     string  `json:"image_prompt"`
+	ImportanceScore float64 `json:"importance_score"`
+	SceneType       string  `json:"scene_type"`
+	Location        string  `json:"location"`
+	Mood            string  `json:"mood"`
 }

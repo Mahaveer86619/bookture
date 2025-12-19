@@ -23,11 +23,15 @@ func (eps *ParserService) generateScenesForChapterWithRetry(chapter models.Chapt
 		}
 
 		lastErr = err
-		log.Printf("Scene generation attempt %d/%d failed for Chapter %d: %v",
-			attempt, eps.maxRetries, chapter.ID, err)
+
+		sleepDuration := eps.retryDelay * time.Duration(attempt)
+		if strings.Contains(err.Error(), "429") || strings.Contains(err.Error(), "RESOURCE_EXHAUSTED") {
+			log.Printf("Rate limit hit. Waiting 60s before retry...")
+			sleepDuration = 60 * time.Second
+		}
 
 		if attempt < eps.maxRetries {
-			time.Sleep(eps.retryDelay * time.Duration(attempt))
+			time.Sleep(sleepDuration)
 		}
 	}
 

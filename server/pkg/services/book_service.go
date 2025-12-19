@@ -181,6 +181,7 @@ func (bs *BookService) GetVolumeDetails(userID uint, volumeID uint) (*views.Volu
 		Preload("Chapters.Sections", func(db *gorm.DB) *gorm.DB {
 			return db.Order("sections.section_no ASC")
 		}).
+		Preload("Chapters.Sections.Scenes").
 		First(&volume).Error
 
 	if err != nil {
@@ -212,14 +213,29 @@ func (bs *BookService) GetVolumeDetails(userID uint, volumeID uint) (*views.Volu
 		}
 
 		for j, sec := range ch.Sections {
-			chView.Sections[j] = views.SectionView{
+			secView := views.SectionView{
 				ID:          sec.ID,
 				SectionNo:   sec.SectionNo,
 				Content:     sec.CleanText,
 				WordCount:   sec.WordCount,
 				HasDialogue: sec.HasDialogue,
 				HasAction:   sec.HasAction,
+				Scenes:      make([]views.SceneView, len(sec.Scenes)),
 			}
+
+			for k, sc := range sec.Scenes {
+				secView.Scenes[k] = views.SceneView{
+					ID:              sc.ID,
+					Summary:         sc.Summary,
+					ImageURL:        sc.ImageURL,
+					ImagePrompt:     sc.ImagePrompt,
+					ImportanceScore: sc.ImportanceScore,
+					SceneType:       sc.SceneType,
+					Location:        sc.Location,
+					Mood:            sc.Mood,
+				}
+			}
+			chView.Sections[j] = secView
 		}
 		view.Chapters[i] = chView
 	}
