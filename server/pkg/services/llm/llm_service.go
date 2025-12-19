@@ -18,6 +18,8 @@ func NewLLMService() LLMService {
 	switch cfg.LLM_PROVIDER {
 	case "gemini-api":
 		return &GeminiService{}
+	case "ollama":
+		return &OllamaService{}
 	// Case "s3": return &S3Storage{...}
 	default:
 		return &GeminiService{}

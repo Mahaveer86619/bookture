@@ -32,6 +32,7 @@ type Config struct {
 	IMAGE_PROVIDER string
 	IMAGE_KEY      string
 	IMAGE_MODEL    string
+	LLM_HOST       string
 }
 
 var AppConfig Config
@@ -62,6 +63,7 @@ func LoadConfig() {
 		LLM_PROVIDER: getEnv("LLM_PROVIDER", "gemini-api"),
 		LLM_KEY:      getEnv("LLM_KEY", ""),
 		LLM_MODEL:    getEnv("LLM_MODEL", "gemini-1.5-flash"),
+		LLM_HOST:     getEnv("LLM_HOST", "http://localhost:11434"),
 
 		IMAGE_PROVIDER: getEnv("IMAGE_PROVIDER", ""),
 		IMAGE_KEY:      getEnv("IMAGE_KEY", ""),
