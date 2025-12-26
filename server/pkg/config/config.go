@@ -28,11 +28,11 @@ type Config struct {
 	LLM_PROVIDER string
 	LLM_KEY      string
 	LLM_MODEL    string
+	LLM_HOST       string
 
 	IMAGE_PROVIDER string
 	IMAGE_KEY      string
 	IMAGE_MODEL    string
-	LLM_HOST       string
 }
 
 var AppConfig Config

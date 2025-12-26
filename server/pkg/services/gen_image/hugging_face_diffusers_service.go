@@ -2,27 +2,33 @@ package gen_image
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"math"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Mahaveer86619/bookture/server/pkg/config"
+	"golang.org/x/time/rate"
 )
 
 type HuggingFaceDiffusersService struct {
-	apiUrl string
-	apiKey string
-	client *http.Client
+	apiUrl  string
+	apiKey  string
+	client  *http.Client
+	limiter *rate.Limiter
 }
 
 func (s *HuggingFaceDiffusersService) Init() error {
 	s.apiUrl = config.AppConst.HuggingFaceStableDifussionXLbaseV1 + config.AppConfig.IMAGE_MODEL
 	s.apiKey = config.AppConfig.IMAGE_KEY
 	s.client = &http.Client{Timeout: 120 * time.Second}
+	s.limiter = rate.NewLimiter(2, 5)
 
 	if s.apiKey == "" {
 		return fmt.Errorf("HuggingFace API key is missing")
@@ -37,6 +43,10 @@ func (s *HuggingFaceDiffusersService) HealthCheck() error {
 }
 
 func (s *HuggingFaceDiffusersService) GenerateImage(prompt string) (string, error) {
+	if err := s.limiter.Wait(context.Background()); err != nil {
+		return "", fmt.Errorf("rate limiter error: %w", err)
+	}
+
 	maxRetries := 5
 
 	for i := 0; i < maxRetries; i++ {
@@ -81,9 +91,17 @@ func (s *HuggingFaceDiffusersService) GenerateImage(prompt string) (string, erro
 		}
 
 		// Handle Retriable Errors (503 Model Loading or 429 Rate Limit)
-		if resp.StatusCode == http.StatusServiceUnavailable || resp.StatusCode == http.StatusTooManyRequests {
-			waitTime := time.Duration(math.Pow(2, float64(i+1))) * time.Second
-			time.Sleep(waitTime)
+		if resp.StatusCode == http.StatusTooManyRequests {
+			// HF sends: RateLimit: "...;r=0;t=23"
+			if rl := resp.Header.Get("RateLimit"); rl != "" {
+				if reset := parseResetSeconds(rl); reset > 0 {
+					time.Sleep(time.Duration(reset) * time.Second)
+					continue
+				}
+			}
+
+			// Fallback
+			time.Sleep(time.Duration(math.Pow(2, float64(i+1))) * time.Second)
 			continue
 		}
 
@@ -92,4 +110,17 @@ func (s *HuggingFaceDiffusersService) GenerateImage(prompt string) (string, erro
 	}
 
 	return "", fmt.Errorf("failed after %d retries", maxRetries)
+}
+
+func parseResetSeconds(header string) int {
+	// example: "api|resolvers";r=0;t=23
+	parts := strings.Split(header, ";")
+	for _, p := range parts {
+		if strings.HasPrefix(strings.TrimSpace(p), "t=") {
+			if v, err := strconv.Atoi(strings.TrimPrefix(strings.TrimSpace(p), "t=")); err == nil {
+				return v
+			}
+		}
+	}
+	return 0
 }
