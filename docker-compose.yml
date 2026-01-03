@@ -1,10 +1,10 @@
 services:
   server:
-    container_name: server
     build:
-      context: ./server
+      context: ./bookture_server
+      dockerfile: Dockerfile
     env_file:
-      - ./server/.env
+      - ./bookture_server/.env
     ports:
       - "7000:7000"
     depends_on:
@@ -13,23 +13,24 @@ services:
     networks:
       - bookture-network
     volumes:
-      - ./server/uploads:/app/uploads
+      - ./bookture_server/uploads:/app/uploads
 
   db:
-    image: postgres:latest
-    container_name: postgres_db
+    build: ./bookture_db
+    container_name: bookture_db
+    restart: always
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: password123
-      POSTGRES_DB: bookture_db
+      POSTGRES_USER: bookture
+      POSTGRES_PASSWORD: securepassword
+      POSTGRES_DB: bookture
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - db_data:/var/lib/postgresql/data
     networks:
       - bookture-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U bookture -d bookture"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -39,4 +40,4 @@ networks:
     driver: bridge
 
 volumes:
-  postgres_data:
+  db_data:

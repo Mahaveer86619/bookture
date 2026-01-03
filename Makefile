@@ -1,7 +1,7 @@
 APP_NAME=bookture-server
 UPLOAD_DIR=server/uploads
 
-.PHONY: docker-run local-run docker-down clean restart restart-clean
+.PHONY: docker-run local-run docker-down clean restart restart-clean logs
 
 docker-run:
 	@echo "Starting Docker..."
@@ -19,11 +19,14 @@ clean: docker-down
 	@echo "Cleaning uploads..."
 	sudo rm -rf $(UPLOAD_DIR)
 
-restart:
+restart: 
 	@echo "Restarting with old data..."
 	docker compose down
 	docker compose up --build
 
 restart-clean: clean
 	@echo "Restarting with new data..."
-	docker compose up --build
+	docker compose up --build -d
+
+logs:
+	docker compose logs -f server
